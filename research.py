@@ -1,4 +1,4 @@
-from utils.api import apiConnector, intrinioApi
+from utils.lib.intrinio import intrinioApi
 from ignore.config import global_config
 import json
 import pdb

@@ -1,5 +1,5 @@
 import datetime
-from research import research
+from utils.application import traderApp
 
 import pdb
 
@@ -7,36 +7,50 @@ now = datetime.datetime.now()
 end_date = now.strftime('%Y-%m-%d')
 start_date = (now - datetime.timedelta(days=7)).strftime('%Y-%m-%d')
 
-r = research(
+
+app = traderApp(
+    config=None
+)
+
+stocks = app.research.screenStocks(
+    app,
 	config = {
 		'service':'intrinio',
 		'json':True,
-		'parameters': 'close_price~lt~5.00~penny_stock,pricetoearnings~lt~50~penny_stock'
-	})
+		'parameters': {
+		    'conditions':'close_price~lt~5.00~penny_stock,pricetoearnings~lt~50~penny_stock'
+		}
+    }
+)
 
-e = research(
-	config = {
-		'service':'intrinio',
-		'json':True,
-		'type': 'stock'
-	})
+# print stocks
 
-data_r = r.screenStocks(config=None)
-print data_r['data']
+backdata = app.research.backfillHistoricals(
+    app,
+    stocks['data'],
+    config={
+        'service':'intrinio',
+        'json':True,
+        'parameters':{
+            'start_date':'2018-01-01',
+            'end_date':'2018-01-14',
+            'frequency':'daily'   
+        }
+    }
+)
 
+print backdata
 
-#data_e = e.exchangeInfo(config=None)
-#print data_e
+"""
 
-
-
-# backfillHistoricals(
-#     config={
-#         'service':'intrinio',
-#         'json':True,
-#         'params': '',
-#         'start': start_date,
-#         'end': end_date,
-#         'symbols': data['data']
-#     }
-# )
+data_bf = r.backfillHistoricals(
+    config={
+        'service':'intrinio',
+        'json':True,
+        'params': '',
+        'start_date': start_date,
+        'end_date': end_date,
+        'symbols': data_r['data']
+    }
+)
+"""

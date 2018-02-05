@@ -1,55 +1,46 @@
 import urllib2
 import json
-from pprint import pprint
+import datetime
+from lib.intrinio import intrinioApi
+from ignore.config import global_config
+
 import pdb
 import logging
-import datetime
 
 class apiConnector(object):
-    def __init__(self,parent):
-        if isinstance(parent,object):
-            self.config = parent.config
-        elif type(parent) is dict:
-            if 'username' in parent:
-                self.username = parent['username']
-            if 'password' in parent:
-                self.password = parent['password']
-            if 'credentials' in parent:
-                self.credentials = parent['credentials']
-            if 'parameters' in parent:
-                self.parameters = parent['parameters']
-            elif hasattr(self,'config'):
-                if hasattr(self,'config'):
-                    pass
-
-        self.now = datetime.datetime.now()
-        self.today_str = self.now.strftime('%Y-%m-%d')
-
+    def __init__(self,config):
+        self.intrinio = intrinioApi(config=config['intrinio'])
+    
     def callApi(self,config):
-
-        if config is None and hasattr(self,'config'):
-            config = self.config
-
-    	if 'headers' in config:
-    		request_headers = config['headers']
-
-    	if 'data' in config:
-    		data = config['data']
+        if config is None:
+            raise RuntimeException('Cannot call blank API')
         else:
-            data = None
+            # if 'headers' in config:
+            #     request_headers = config['headers']
 
-        if 'request_url' in config:
-            request_url = config['request_url']
-        elif 'url' in config:
-            request_url = config['url']
-        else:
-            return 'A URL endpoint is required to make an HTTP call'
+            if 'data' in config:
+            	data = config['data']
+            else:
+                data = None
 
-        if request_headers:
-        	request = urllib2.Request(request_url, headers=request_headers)
-        else:
-            request = urllib2.Request(request_url)
+            if 'url' in config:
+                request_url = config['url']
+            else:
+                raise RuntimeException('A URL endpoint is required to make an HTTP call')
 
-        contents = urllib2.urlopen(request,data).read()
+            if 'parameters' in config:
+                query_params = ''
+                for k in config['parameters']:
+                    query_params += k + '=' + config['parameters'][k] + '&'
+                request_url += query_params
+            
+            # pdb.set_trace()
+            
+            if 'headers' in config:
+            	request = urllib2.Request(request_url, headers=config['headers'])
+            else:
+                request = urllib2.Request(request_url)
+    
+            contents = urllib2.urlopen(request,data).read()
 
-    	return contents
+            return contents

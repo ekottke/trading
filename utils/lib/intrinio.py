@@ -1,22 +1,74 @@
-from utils.api import apiConnector
+import pdb
 
-class intrinioApi(apiConnector):
-    def __init__(self,parent):
-        super(intrinioApi, self).__init__(parent)
-
-
-    def initScreen(self,config):
-        self.url = 'https://api.intrinio.com/securities/search?'
+class intrinioApi(object):
+    def __init__(self,config):
         if config is not None:
-            if 'parameters' in config:
-            	self.config['request_url'] = self.config['url'] + 'conditions=' + self.config['parameters']
-        elif self.config:
-            if 'parameters' in self.config:
-                self.config['request_url'] = self.url + 'conditions=' + self.config['parameters']
+            self.config = config
 
-        data = apiConnector.callApi(self, config=None)
-
+    def _screener(self,app,config):
+        c = self.config
+        c.update({
+            'url':'https://api.intrinio.com/securities/search?'
+        })
+        
+        if config is not None:
+            c.update(config)
+        
+        data = app.api.callApi(
+                config=c
+                )
+        
         return data
+    
+    def _backfillHistoricals(self,app,stocks,config):
+        
+        if config is not None:
+            if 'start_date' in config['parameters']:
+                start_date = config['parameters']['start_date']
+            else:
+                print 'Start Date defaulted'
+                start_date = app.trail_30
+        
+            if 'end_date' in config['parameters']:
+                end_date = config['parameters']['end_date']
+            else:
+                print 'End Date defaulted'
+                end_date = app.today_str
+    
+            if 'frequency' in config['parameters']:
+                frequency = config['parameters']['frequency']
+            else:
+                print 'Frequency defaulted'
+                frequency = 'daily'
+            
+            if 'item' in config['parameters']:
+                item = config['parameters']['item']
+            else:
+                print 'Item defaulted'
+                item = 'high_price'
+                
+        c = self.config
+        c.update({
+            'url':'https://api.intrinio.com/historical_data?',
+            'parameters': {
+                'start_date':start_date,
+                'end_date':end_date,
+                'frequency':frequency,
+                'item':item
+            }
+        })
+        
+        # pdb.set_trace()
+        
+        data = dict()
+        for s in stocks:
+            c['parameters']['identifier']=s['ticker']
+            data[s['ticker']]=app.api.callApi(
+                                    config=c
+                                )
+        
+        return data
+            
 
     # def initExchangeData(self,config):
 #         pdb.set_trace()
@@ -42,11 +94,4 @@ class intrinioApi(apiConnector):
 #         if 'symbols' in config:
 #             config = {}
 #             for s in config['symbols']:
-#                 data = apiConnector.callApi(self,config)
-#
-#     def initHistorical(config):
-#         self.url = 'https://api.intrinio.com/historical_data?'
-#
-#         if 'start_date' not in config:
-#             logger.debug('Start Date is not present')
-#             exit
+#                 data = apiConnector.callApi(self,config)       

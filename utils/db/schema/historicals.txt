@@ -1,0 +1,5 @@
+CREATE TABLE historicals (
+  symbol VARCHAR(5),
+  day DATE,
+  price DOUBLE
+);
